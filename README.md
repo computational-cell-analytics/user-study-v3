@@ -5,23 +5,22 @@
 
 - Cluster images into three categories: large, medium, small organoids, based on initial segmentation.
 - Create 3 different splits, each containing at least one image from each of the category
-    - Split 1: 4 images, to be annotated with the following approaches:
+    - Split 1: 3 images, to be annotated with the following approaches:
         - I: Manual annotation
         - II: Segmentation and correction in CellPose (cyto2)
         - III: Segmentation and correction with micro_sam (vit_b)
         - IV: Segmentation and correction with micro_sam (vit_b_lm)
-    - Split 2: 8 images, to be annotated with the following approaches:
+    - Split 2: 6 images, to be annotated with the following approaches:
         - V: CellPose HIL (starting from cyto2)
         - VI: micro_sam (same approach as III or IV, what worked better)
-    - Split 3: 8 images, to be annotated with the following (**Ideally this should have GT annotations!**)
+    - Split 3: 6 images, to be annotated with the following
         - VII: CellPose segmentation + correction (based on model after V)
         - VIII: micro_sam: segmentation + correction (based on model trained on data annotated in VI)
 
 - Segmentation evaluation:
-    - We evaluate the results from Split 3 against GT.
-    - We evaluate CellPose and micro_sam models trained on data from Split 2 and Splits 2 and 3 on another dataset.
-        - On our reference data (but needs some more corrections)
-        - On OrganoIDNet data (need to double check it, see below)
+    - We evaluate CellPose and micro_sam models trained on data from (Split 2) and (Splits 2 and 3) on:
+        - On our reference data (some images, with more corrections)
+        - On OrganoIDNet data (the 10 images from the test split)
 
 - Time measurements:
     - Measure the annotation times per image.
