@@ -33,8 +33,8 @@ def check_new_images():
 
 
 def main():
-    # check_reference_images()
-    check_new_images()
+    check_reference_images()
+    # check_new_images()
 
 
 if __name__ == "__main__":

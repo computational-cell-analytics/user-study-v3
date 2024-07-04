@@ -1,21 +1,91 @@
 # Updated micro-sam user study
 
 
+## Annotation Experiments
+
+### Preparation
+
+The data for the user study is stored here: `/scratch-emmy/projects/nim00007/user-study`.
+You can copy it to your laptop via:
+```
+rsync -e "ssh -i <SSH_KEY>" -avz <USER_NAME>@glogin9.hlrn.de:/scratch-emmy/projects/nim00007/user-study/data .
+```
+And sync your annotation results via: 
+```
+rsync -e "ssh -i <SSH_KEY>" -avz data <USER_NAME>@glogin9.hlrn.de:/scratch-emmy/projects/nim00007/user-study
+```
+Enter the location of your ssh key for HLRN in `<SSH_KEY>` (for me: `~/.ssh/id_rsa_hlrn`) and your HLRN username for `USER_NAME` (for me: `nimcpape`).
+
+The google sheet for timing results is [here](https://docs.google.com/spreadsheets/d/17-FKwLk__XuZHbUkPveC7OqsW_kBaIt0aBsBp3Lq7VQ/edit?usp=sharing). Enter the times as HH:MM:SS. You can leave out HH if not needed.
+
+To run the annotations with micro_sam use an environemnt with **the latest** micro_sam `master` branch.
+See [here](https://computational-cell-analytics.github.io/micro-sam/micro_sam.html#from-source) for instructions how to set up this environment.
+
+To run the annotations with CellPose (TODO ...)
+
+
+### Experiments
+
+1. Manual annotation of images in Split 1:
+    - Annotate the organoids individually with napari.
+    - Run `python annotate_v1.py` to start napari for the respective images.
+    - Measure the time it takes for annotation per image (e.g. using your phone's stopwatch function), and enter it into the corresponding column in the google sheet.
+    - Store the results in `data/annotations/v1/<YOUR_NAME>`, e.g. `data/annotations/v1/constantin`.
+        - Use `Save Selected Layer ...` in napari to save your annotations. Name each file `im<ID>.tif`. You can find the ID on top of the viewer.
+    - You can find an example video [here](https://drive.google.com/file/d/1Dyk9yNisaCUhuOYr-d9H31I14BNIa9ad/view?usp=sharing). The napari annotation fucntionality is explained in more detail [here](https://napari.org/stable/howtos/layers/labels.html). Please note that there is a bit too much debris labeled in the example image. See the [annotation guidelines](#annotation-guidelines) below for details.
+
+2. Segmentation and correction of Split 1 with micro_sam (vit_b)
+    - Auto-segment and interactively correct the organoids with micro_sam (default SAM model).
+    - Run `python annotate_v2.py <YOUR_NAME>`, e.g. `python annotate_v2.py constantin`. This will start micro_sam for the data.
+    - It will first precompute embeddings and AMG State. This will take a while when running the command for the first time. Please note the time it takes in `preprocessing` in the `v2` tab of the spreadsheet. This time will be printed in the terminal.
+    - Then annotate each image by first running automatic segmentation and then interactively correcting the result.
+    - You don't need to save the annotation result, micro_sam will take care of this for you when you click `Next`.
+    - You can find an example video [here](https://drive.google.com/file/d/1NdtHjpxdBp3-1hyTAt1vBZX4FRu9GGp9/view?usp=sharing). The micro_sam annotation functionality is explained in more detail [here](https://computational-cell-analytics.github.io/micro-sam/micro_sam.html#annotator-2d).
+
+3. Segmentation and correction of Split 1 with micro_sam (vit_b_lm)
+    - Auto-segment and interactively correct the organoids with micro_sam (our finetuned model).
+    - Run `python annotate_v3.py <YOUR_NAME>`, e.g. `python annotate_v3.py constantin`. This will start micro_sam for the data.
+    - Proceed as in 2.
+
+4. Segmentation and correction of Split 1 with CellPose
+    - TODO
+
+5. Segmentation and correction of Split 2 with micro_sam
+    - TODO
+
+6. Segmentation and correction of Split 2 with CellPose HIL
+    - TODO
+
+7. Segmentation and correction of Split 3 with micro_sam
+    - TODO
+
+8. Segmentation and correction of Split 3 with CellPose
+    - TODO
+
+### Annotation guidelines
+
+TODO: explain with example images.
+
 ## User study strategy:
+
+New annotations from Sushmita: `/scratch-emmy/projects/nim00007/data/pdo/user_study/user_study_test_labels_2/`
+TODO: do another round of proof-reading on top and take care of the remaining three images.
+
+Annotators: Anwai, Caro, Constantin, Luca, Marei, Sushmita
 
 - Cluster images into three categories: large, medium, small organoids, based on initial segmentation.
 - Create 3 different splits, each containing at least one image from each of the category
     - Split 1: 3 images, to be annotated with the following approaches:
-        - I: Manual annotation
-        - II: Segmentation and correction in CellPose (cyto2)
-        - III: Segmentation and correction with micro_sam (vit_b)
-        - IV: Segmentation and correction with micro_sam (vit_b_lm)
+        1. Manual annotation
+        2. Segmentation and correction with micro_sam (vit_b)
+        3. Segmentation and correction with micro_sam (vit_b_lm)
+        4. Segmentation and correction in CellPose (cyto2)
     - Split 2: 6 images, to be annotated with the following approaches:
-        - V: CellPose HIL (starting from cyto2)
-        - VI: micro_sam (same approach as III or IV, what worked better)
+        5. micro_sam (same approach as III or IV, what worked better)
+        6. CellPose HIL (starting from cyto2)
     - Split 3: 6 images, to be annotated with the following
-        - VII: CellPose segmentation + correction (based on model after V)
-        - VIII: micro_sam: segmentation + correction (based on model trained on data annotated in VI)
+        7. micro_sam: segmentation + correction (based on model trained on data annotated in VI)
+        8. CellPose segmentation + correction (based on model after V)
 
 - Segmentation evaluation:
     - We evaluate CellPose and micro_sam models trained on data from (Split 2) and (Splits 2 and 3) on:
