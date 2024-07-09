@@ -64,7 +64,18 @@ To run the annotations with CellPose (TODO ...)
 
 ### Annotation guidelines
 
-TODO: explain with example images.
+The goal is to annotate the organoids in the images. The organoids are generally round structures enclosed by a membrane.
+They come in different sizes and the size distribution is often heterogenous in a given image.
+
+In many cases it is not fully clear what is an organoid and what is a small background object or out-of-focus.
+These cases are somewhat subjective, try to judge based on the size (too small -> don't annotate) and how in focus an object is (blurry -> don't annotate).
+
+Another case of ambiguity are overlapping organoids. In these cases annotate one of the organoids fully.
+
+The images below show example annotations with some comments for the cases discussed above.
+
+![organoid-overview](https://github.com/computational-cell-analytics/user-study-v3/assets/4263537/f681b443-fc67-4ddf-b539-11778933529e)
+
 
 ## User study strategy:
 
