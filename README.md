@@ -16,6 +16,11 @@ rsync -e "ssh -i <SSH_KEY>" -avz data <USER_NAME>@glogin9.hlrn.de:/scratch-emmy/
 ```
 Enter the location of your ssh key for HLRN in `<SSH_KEY>` (for me: `~/.ssh/id_rsa_hlrn`) and your HLRN username for `USER_NAME` (for me: `nimcpape`).
 
+After syncing the results you still have to change the file permissions on scratch:
+- Log into an HLRN node.
+- `cd /scratch-emmy/projects/nim00007/user-study/data`
+- `chgrp -R nim0007 annotations`
+
 The google sheet for timing results is [here](https://docs.google.com/spreadsheets/d/17-FKwLk__XuZHbUkPveC7OqsW_kBaIt0aBsBp3Lq7VQ/edit?usp=sharing). Enter the times as HH:MM:SS. You can leave out HH if not needed.
 
 To run the annotations with micro_sam use an environemnt with **the latest** micro_sam `master` branch.
