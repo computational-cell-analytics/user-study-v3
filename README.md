@@ -56,7 +56,8 @@ To run the annotations with CellPose (TODO ...)
     - TODO
 
 5. Segmentation and correction of Split 2 with micro_sam
-    - TODO
+    - Same approach as 2., bu for the data in split 2.
+    - Run `python annotate_v4 <YOUR_NAME>`, proceed as in 2. otherwise.
 
 6. Segmentation and correction of Split 2 with CellPose HIL
     - TODO
