@@ -56,14 +56,17 @@ To run the annotations with CellPose (TODO ...)
     - TODO
 
 5. Segmentation and correction of Split 2 with micro_sam
-    - Same approach as 2., bu for the data in split 2.
-    - Run `python annotate_v4 <YOUR_NAME>`, proceed as in 2. otherwise.
+    - Same approach as 2., but for the data in split 2.
+    - Run `python annotate_v5 <YOUR_NAME>`, proceed as in 2. otherwise.
 
 6. Segmentation and correction of Split 2 with CellPose HIL
     - TODO
 
 7. Segmentation and correction of Split 3 with micro_sam
-    - TODO
+    - Before running this you need to finetune a model via:
+        - `python finetune_sam.py <NAME>`
+        - Note: ideally you should run this on your laptop and let it train for a few hours. But if this does not work you can also run it on the cluster and then copy back over the trained model. Please note down the training time in the corresponding google sheet too.
+    - Then run `python annotate_v7.py <YOUR_NAME>` and proceed as in 3. otherwise.
 
 8. Segmentation and correction of Split 3 with CellPose
     - TODO

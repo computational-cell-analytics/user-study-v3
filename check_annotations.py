@@ -10,10 +10,10 @@ from skimage.measure import label
 IMAGE_ROOT = "./data/for_annotation"
 ANNOTATION_ROOT = "./data/annotations"
 NUM_IMAGES = {
-    "v1": 3, "v2": 3, "v3": 3
+    "v1": 3, "v2": 3, "v3": 3, "v5": 6,
 }
 SPLITS = {
-    "v1": "split1", "v2": "split1", "v3": "split1",
+    "v1": "split1", "v2": "split1", "v3": "split1", "v5": "split2",
 }
 
 

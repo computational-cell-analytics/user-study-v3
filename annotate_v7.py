@@ -8,15 +8,16 @@ def main():
     parser.add_argument("name")
     args = parser.parse_args()
 
-    input_folder = "data/for_annotation/split2"
-    output_folder = f"data/annotations/v4/{args.name}"
+    input_folder = "data/for_annotation/split1"
+    output_folder = f"data/annotations/v7/{args.name}"
 
-    embedding_path = "./embeddings/v4"
+    embedding_path = "./embeddings/v7"
+    checkpoint = f"models/{args.name}/checkpoints/organoid_model/latest.pt"
 
     image_folder_annotator(
         input_folder, output_folder, pattern="*.tif",
         model_type="vit_b", embedding_path=embedding_path,
-        precompute_amg_state=True,
+        precompute_amg_state=True, checkpoint_path=checkpoint
     )
 
 
