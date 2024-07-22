@@ -34,7 +34,9 @@ To run the annotations with CellPose:
     or if you're using zsh: python -m pip install 'cellpose[gui]'==2.3.2
 - conda activate cellpose
 - Open CellPose GUI using: python -m cellpose
+
 See [here](https://github.com/MouseLand/cellpose#option-1-installation-instructions-with-conda) for more details on the installation. 
+
 Using CellPose GUI: Information on how to use it is mentioned under relevant experiments. More details can be found [here](https://cellpose.readthedocs.io/en/v1.0.2/gui.html#gui).
 
 ### Experiments
