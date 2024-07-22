@@ -82,7 +82,6 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
 6. Segmentation and correction of Split 2 with CellPose HIL
     - Annotate the first image using steps mentioned in Experiment 4.
     - Human-in-the-loop (HIL) feature of CellPose allows for finetuning the cyto2 model based on user corrected annotations. Only 1 image can be used to finetune at a time. The idea is to use the pre-trained cyto2 model on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations and save new model -> use new model to segment the next image your dataset. Repeat this cycle until you achieve the desired segmentation results. 
-    
     To use HIL finetuning function of cellpose:
         - Finetune using Ctrl + T. This opens the 'train settings' dialogue box. 
         ![alt text](images/train_hil.png)
