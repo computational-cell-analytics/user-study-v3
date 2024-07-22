@@ -26,8 +26,16 @@ The google sheet for timing results is [here](https://docs.google.com/spreadshee
 To run the annotations with micro_sam use an environemnt with **the latest** micro_sam `master` branch.
 See [here](https://computational-cell-analytics.github.io/micro-sam/micro_sam.html#from-source) for instructions how to set up this environment.
 
-To run the annotations with CellPose (TODO ...)
-
+To run the annotations with CellPose: 
+- Clone the cellpose repository from: https://github.com/MouseLand/cellpose
+- Create cellpose enviroment using conda with python 3.9: conda create --name cellpose python=3.9 -c conda-forge
+- Install CellPose v2.3.2 using 
+    python -m pip install cellpose[gui]==2.3.2
+    or if you're using zsh: python -m pip install 'cellpose[gui]'==2.3.2
+- conda activate cellpose
+- Open CellPose GUI using: python -m cellpose
+See [here](https://github.com/MouseLand/cellpose#option-1-installation-instructions-with-conda) for more details on the installation. 
+Using CellPose GUI: Information on how to use it is mentioned under relevant experiments. More details can be found [here](https://cellpose.readthedocs.io/en/v1.0.2/gui.html#gui).
 
 ### Experiments
 
@@ -53,14 +61,31 @@ To run the annotations with CellPose (TODO ...)
     - Proceed as in 2.
 
 4. Segmentation and correction of Split 1 with CellPose
-    - TODO
+    Here's a quick start to using cellpose GUI. More Information on how to use it can be found [here](https://cellpose.readthedocs.io/en/latest/gui.html)
+    - Drag and drop the image you want to segment
+    - Use model cyto2 from the model zoo. As soon as you click on cyto2, **start your stopwatch**, since this runs the cyto2 pre-trained model on your image. 
+    ![alt text](images/cyto2.png)
+    - To correct/add annotations:
+        - Toggle between mask and no mask views: Select MASKS ON [X] under 'Drawing' on the left pannel  
+        - Delete a mask: Ctrl + left click on selected mask
+        - Create new mask: right click + hover mouse on the boundary of object  
+        - Save annotations: Ctrl + S to save masks as .npy file. The annotations are saved in the image directory and you will have to move these to `data/annotations/v4/<YOUR_NAME>`.
+    - Repeat for all images in Split 1.
 
 5. Segmentation and correction of Split 2 with micro_sam
     - Same approach as 2., but for the data in split 2.
     - Run `python annotate_v5 <YOUR_NAME>`, proceed as in 2. otherwise.
 
 6. Segmentation and correction of Split 2 with CellPose HIL
-    - TODO
+    - Annotate the first image using steps mentioned in Experiment 4.
+    - Human-in-the-loop (HIL) feature of CellPose allows for finetuning the cyto2 model based on user corrected annotations. Only 1 image can be used to finetune at a time. The idea is to use pre-trained cyto2 on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations and save new model -> use new model to segment the next image your dataset. Repeat this cycle until you achieve desired segmentation results. To use HIL finetuning function of cellpose:
+        - Finetune using Ctrl + T. This opens the 'train settings' dialogue box. 
+        ![alt text](images/train_hil.png)
+        - Here change initial model to cyto2 and add suffix image name `_im<N>` for easy identification of the new model. Click OK. **Start timing** at this point to record training time using the current image. Monitor the completion of training in the terminal and record the time in the speadsheet in row `im<N>_training`. You can also find the training time by looking at the training log in the terminal starting from `[INFO] computing flows for labels` to `[INFO] saving network parameters`.
+        ![alt text](images/terminal_training_cellpose.png)
+        - After training completes, cellpose opens the next image in the directory and annotates automatically with the new model. 
+        - Make corrections to the new image and repeat steps.
+        - For this experiment we will finetune using all images in Split 2 if at least 1 correction was made. If no correction needs to be made for an image, skip training and load new image.  
 
 7. Segmentation and correction of Split 3 with micro_sam
     - Before running this you need to finetune a model via:
@@ -69,7 +94,8 @@ To run the annotations with CellPose (TODO ...)
     - Then run `python annotate_v7.py <YOUR_NAME>` and proceed as in 3. otherwise.
 
 8. Segmentation and correction of Split 3 with CellPose
-    - TODO
+    - Annotate all images using the latest model from Experiment 6: Choose the latest model `CP_<>_<>_im5` under 'custom models' in the left pannel and click run model. 
+    - Use the same model for all images in Split 3 and correct annotations just as in Experiment 4. Here, you do not perform HIL finetuning after each image. 
 
 ### Annotation guidelines
 
