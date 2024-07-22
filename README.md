@@ -89,7 +89,7 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
         ![alt text](images/terminal_training_cellpose.png)
         - After training completes, cellpose opens the next image in the directory and annotates automatically with the new model. 
         - Make corrections to the new image and repeat steps.
-        - For this experiment we will finetune using all images in Split 2 if at least 1 correction was made. If no correction needs to be made for an image, skip training and load new image.  
+        - For this experiment we will finetune using all images in Split 2 always. If no correction needs to be made for an image, run training as it is and load new image.
 
 7. Segmentation and correction of Split 3 with micro_sam
     - Before running this you need to finetune a model via:
