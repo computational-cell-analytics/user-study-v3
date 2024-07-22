@@ -62,15 +62,16 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
     - Run `python annotate_v3.py <YOUR_NAME>`, e.g. `python annotate_v3.py constantin`. This will start micro_sam for the data.
     - Proceed as in 2.
 
-4. Segmentation and correction of Split 1 with CellPose
+4. Segmentation and correction of Split 1 with CellPose:
+
     Here's a quick start to using cellpose GUI. More Information on how to use it can be found [here](https://cellpose.readthedocs.io/en/latest/gui.html)
-    - Drag and drop the image you want to segment
+    - Drag and drop the image you want to segment.
     - Use model cyto2 from the model zoo. As soon as you click on cyto2, **start your stopwatch**, since this runs the cyto2 pre-trained model on your image. 
     ![alt text](images/cyto2.png)
     - To correct/add annotations:
-        - Toggle between mask and no mask views: Select MASKS ON [X] under 'Drawing' on the left pannel  
-        - Delete a mask: Ctrl + left click on selected mask
-        - Create new mask: right click + hover mouse on the boundary of object  
+        - Toggle between mask and no mask views: Select MASKS ON [X] under 'Drawing' on the left pannel.  
+        - Delete a mask: Ctrl + left click on selected mask.
+        - Create new mask: right click + hover mouse on the boundary of object.
         - Save annotations: Ctrl + S to save masks as .npy file. The annotations are saved in the image directory and you will have to move these to `data/annotations/v4/<YOUR_NAME>`.
     - Repeat for all images in Split 1.
 
@@ -80,7 +81,9 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
 
 6. Segmentation and correction of Split 2 with CellPose HIL
     - Annotate the first image using steps mentioned in Experiment 4.
-    - Human-in-the-loop (HIL) feature of CellPose allows for finetuning the cyto2 model based on user corrected annotations. Only 1 image can be used to finetune at a time. The idea is to use pre-trained cyto2 on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations and save new model -> use new model to segment the next image your dataset. Repeat this cycle until you achieve desired segmentation results. To use HIL finetuning function of cellpose:
+    - Human-in-the-loop (HIL) feature of CellPose allows for finetuning the cyto2 model based on user corrected annotations. Only 1 image can be used to finetune at a time. The idea is to use the pre-trained cyto2 model on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations and save new model -> use new model to segment the next image your dataset. Repeat this cycle until you achieve the desired segmentation results. 
+    
+    To use HIL finetuning function of cellpose:
         - Finetune using Ctrl + T. This opens the 'train settings' dialogue box. 
         ![alt text](images/train_hil.png)
         - Here change initial model to cyto2 and add suffix image name `_im<N>` for easy identification of the new model. Click OK. **Start timing** at this point to record training time using the current image. Monitor the completion of training in the terminal and record the time in the speadsheet in row `im<N>_training`. You can also find the training time by looking at the training log in the terminal starting from `[INFO] computing flows for labels` to `[INFO] saving network parameters`.
