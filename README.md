@@ -83,14 +83,14 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
 
 6. Segmentation and correction of Split 2 with CellPose HIL
 
-    This experiment contains two parts. Part 1 where images in Split 2 are segmented and corrected with the pre-trained cyto2 mode and Part 2 where we use CellPose human-in-the-loop (HIL) to finetune with each image after correcting the annotations. Create `part1` and `part2` folders in `data/annotations/v6/`. 
+    This experiment contains two parts. Part 1 where images in Split 2 are segmented and corrected with the pre-trained `cyto2` mode and Part 2 where we use CellPose human-in-the-loop (HIL) to finetune with each image after correcting the annotations. Create `part1` and `part2` folders in `data/annotations/v6/`. 
     #### PART 1
-    - Same approach as 4., but for the data in split 2.
-    - Move all .npy segmentation files to `data/annotations/v6/part1/<YOUR_NAME>`
-    - delete all the .npy segmentation files from the split 2 image directory before Part 2. 
+    - Same approach as 4., but for the data in Split 2.
+    - Move all `.npy` segmentation files to `data/annotations/v6/part1/<YOUR_NAME>`
+    - delete all the `.npy` segmentation files from the Split 2 image directory before Part 2. 
 
     #### PART 2
-    - Drag and drop the first image in split 2 and annotate using steps mentioned in Experiment 4. (measure the time taken to annotate it using `cyto2`)
+    - Drag and drop the first image in Split 2 and annotate using steps mentioned in 4. (measure the time taken to annotate it using `cyto2`)
     - Human-in-the-loop (HIL) feature of CellPose allows for finetuning the `cyto2` model based on user corrected annotations. Only 1 image can be used to finetune at a time. The idea is to use the pre-trained `cyto2` model on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations and save the new model -> use the new model to segment the next image in Split 2. Repeat this cycle until you achieve the desired segmentation results. 
     To use HIL finetuning function of cellpose:
         - Finetune using `Ctrl + T`. This opens the 'train settings' dialogue box. 
