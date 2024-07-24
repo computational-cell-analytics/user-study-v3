@@ -66,6 +66,7 @@ To run the annotations with CellPose (TODO ...)
     - Before running this you need to finetune a model via:
         - `python finetune_sam.py <NAME>`
         - Note: ideally you should run this on your laptop and let it train for a few hours. But if this does not work you can also run it on the cluster and then copy back over the trained model. Please note down the training time in the corresponding google sheet too.
+		- For this, you can run `python check_finetuning_timings.py <NAME>`, and this should return you the timing taken to achieve the best model.
     - Then run `python annotate_v7.py <YOUR_NAME>` and proceed as in 3. otherwise.
 
 8. Segmentation and correction of Split 3 with CellPose
