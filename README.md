@@ -84,7 +84,7 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
 6. Segmentation and correction of Split 2 with CellPose HIL
 
     We use CellPose human-in-the-loop (HIL) approach to finetune `cyto2` with each image from Split 2 after correcting the annotations.
-    - Drag and drop an image from split 2.
+    - Drag and drop an image from Split 2.
     - Annotate and correct annotations using steps mentioned in Experiment 4. (measure the time taken in im<N> field in the spreadsheet.)
     - HIL feature of CellPose allows for finetuning the `cyto2` model based on user corrected annotations. In this experiment, you will use the pre-trained `cyto2` model on the first image -> correct or add masks to achieve desired segmentation quality -> finetune using corrected annotations -> use the new model to segment the next image in Split 2. Repeat for all images. 
     Now that you have the corrected annotations, finetune `cyto2` by:
@@ -96,7 +96,7 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
         - Make corrections to the new image and repeat steps.
         - For this experiment we will finetune using all images in Split 2. If no correction needs to be made for an image, run the finetuning as it is and load new image.
         - Move all .npy segmentation files to `data/annotations/v6/<YOUR_NAME>`
-        - delete all the .npy segmentation files from the split 2 image directory before syncing with the cluster storage. 
+        - delete all the `.npy` segmentation files from the split 2 image directory before syncing with the cluster storage. 
 
 7. Segmentation and correction of Split 3 with micro_sam
     - Before running this you need to finetune a model via:
