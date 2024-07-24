@@ -19,7 +19,7 @@ Enter the location of your ssh key for HLRN in `<SSH_KEY>` (for me: `~/.ssh/id_r
 After syncing the results you still have to change the file permissions on scratch:
 - Log into an HLRN node.
 - `cd /scratch-emmy/projects/nim00007/user-study/data`
-- `chgrp -R nim0007 annotations`
+- `chgrp -R nim00007 annotations`
 
 The google sheet for timing results is [here](https://docs.google.com/spreadsheets/d/17-FKwLk__XuZHbUkPveC7OqsW_kBaIt0aBsBp3Lq7VQ/edit?usp=sharing). Enter the times as HH:MM:SS. You can leave out HH if not needed.
 
@@ -102,6 +102,7 @@ Using CellPose GUI: Information on how to use it is mentioned under relevant exp
     - Before running this you need to finetune a model via:
         - `python finetune_sam.py <NAME>`
         - Note: ideally you should run this on your laptop and let it train for a few hours. But if this does not work you can also run it on the cluster and then copy back over the trained model. Please note down the training time in the corresponding google sheet too.
+		- For this, you can run `python check_finetuning_timings.py <NAME>`, and this should return you the timing taken to achieve the best model.
     - Then run `python annotate_v7.py <YOUR_NAME>` and proceed as in 3. otherwise.
 
 8. Segmentation and correction of Split 3 with CellPose
