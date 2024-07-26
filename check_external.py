@@ -7,7 +7,7 @@ def check_orgasegment():
 
     print("Checking orga segment")
 
-    im_paths, label_paths = _get_data_paths("./data/orgasegment", download=True, split="train")
+    im_paths, label_paths = _get_data_paths("./data/datasets/orgasegment", download=True, split="train")
     print("Number of image paths:", len(im_paths))
 
     for ii in range(5):
@@ -25,7 +25,7 @@ def check_organoidnet():
 
     print("Checking organoidnet")
 
-    im_paths, label_paths = _get_data_paths("./data/organoidnet", download=True, split="Training")
+    im_paths, label_paths = _get_data_paths("./data/datasets/organoidnet", download=True, split="Training")
     print("Number of image paths:", len(im_paths))
 
     for ii in range(8):

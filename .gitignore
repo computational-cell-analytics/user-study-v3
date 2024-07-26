@@ -1,3 +1,6 @@
 data/
 embeddings/
 models/
+logs/
+checkpoints/
+sync_annotations_from_hlrn.sh
