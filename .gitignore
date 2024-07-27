@@ -3,4 +3,5 @@ embeddings/
 models/
 logs/
 checkpoints/
+__pycache__/
 sync_annotations_from_hlrn.sh
