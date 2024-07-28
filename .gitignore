@@ -5,3 +5,4 @@ logs/
 checkpoints/
 __pycache__/
 sync_annotations_from_hlrn.sh
+sync_annotations_to_hlrn.sh

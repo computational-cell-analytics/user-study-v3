@@ -28,25 +28,28 @@ def get_paths(name):
 
 
 def run_training(name):
-    with_segmentation_decoder = True
+    with_segmentation_decoder = False
 
     train_images, train_labels, val_images, val_labels = get_paths(name)
+
+    num_workers = 0
+    patch_shape = (1024, 1024)
 
     train_ds = default_sam_dataset(
         raw_paths=train_images, raw_key=None,
         label_paths=train_labels, label_key=None,
-        patch_shape=[1024, 1024], with_segmentation_decoder=with_segmentation_decoder,
+        patch_shape=patch_shape, with_segmentation_decoder=with_segmentation_decoder,
         n_samples=50,
     )
-    train_loader = get_data_loader(train_ds, shuffle=True, batch_size=1)
+    train_loader = get_data_loader(train_ds, shuffle=True, batch_size=1, num_workers=num_workers)
 
     val_ds = default_sam_dataset(
         raw_paths=val_images, raw_key=None,
         label_paths=val_labels, label_key=None,
-        patch_shape=[1024, 1024], with_segmentation_decoder=with_segmentation_decoder,
+        patch_shape=patch_shape, with_segmentation_decoder=with_segmentation_decoder,
         is_train=False, n_samples=4,
     )
-    val_loader = get_data_loader(val_ds, shuffle=True, batch_size=1)
+    val_loader = get_data_loader(val_ds, shuffle=True, batch_size=1, num_workers=num_workers)
 
     train_sam_for_configuration(
         name="organoid_model", configuration="CPU",
