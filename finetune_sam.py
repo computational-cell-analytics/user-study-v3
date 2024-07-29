@@ -28,7 +28,7 @@ def get_paths(name):
 
 
 def run_training(name):
-    with_segmentation_decoder = False
+    with_segmentation_decoder = True
 
     train_images, train_labels, val_images, val_labels = get_paths(name)
 
