@@ -8,6 +8,12 @@ from glob import glob
 from micro_sam.training import train_sam_for_configuration, default_sam_dataset
 from torch_em.segmentation import get_data_loader
 
+# For local finetuning.
+DATA_ROOT = "data"
+
+# For finetuning on the cluster.
+# DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study"
+
 
 def get_paths(name):
     image_folder = "data/for_annotation/split2"
@@ -56,6 +62,7 @@ def run_training(name):
         train_loader=train_loader, val_loader=val_loader,
         with_segmentation_decoder=with_segmentation_decoder,
         save_root=f"./models/{name}", device="cpu",
+        model_type="vit_b_lm"
     )
 
 
