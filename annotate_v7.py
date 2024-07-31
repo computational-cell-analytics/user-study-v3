@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from micro_sam.sam_annotator import image_folder_annotator
 
@@ -13,6 +14,9 @@ def main():
 
     embedding_path = "./embeddings/v7"
     checkpoint = f"models/{args.name}/checkpoints/organoid_model/best.pt"
+    # Check for alternate model location.
+    if not os.path.exists(checkpoint):
+        checkpoint = f"models/micro-sam/v5/{args.name}/checkpoints/organoid_model/best.pt"
 
     image_folder_annotator(
         input_folder, output_folder, pattern="*.tif",
