@@ -9,15 +9,16 @@ from micro_sam.training import train_sam_for_configuration, default_sam_dataset
 from torch_em.segmentation import get_data_loader
 
 # For local finetuning.
-DATA_ROOT = "data"
+# DATA_ROOT = "data"
 
 # For finetuning on the cluster.
-# DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study"
+# DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
+DATA_ROOT = "/scratch1/projects/cca/data/user-study/data"
 
 
 def get_paths(name):
-    image_folder = "data/for_annotation/split2"
-    label_folder = f"data/annotations/v5/{name}"
+    image_folder = os.path.join(DATA_ROOT, "for_annotation/split2")
+    label_folder = os.path.join(DATA_ROOT, f"annotations/v5/{name}")
 
     images = sorted(glob(os.path.join(image_folder, "*.tif")))
     labels = sorted(glob(os.path.join(label_folder, "*.tif")))
@@ -57,6 +58,7 @@ def run_training(name):
     )
     val_loader = get_data_loader(val_ds, shuffle=True, batch_size=1, num_workers=num_workers)
 
+    print("Start finetuning for", name, "!!")
     train_sam_for_configuration(
         name="organoid_model", configuration="CPU",
         train_loader=train_loader, val_loader=val_loader,
