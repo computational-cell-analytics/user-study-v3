@@ -10,8 +10,8 @@ from elf.evaluation import mean_segmentation_accuracy
 from tqdm import tqdm
 
 # Change this for cluster
-DATA_ROOT = "../data"
-MODEL_ROOT = ""
+DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
+MODEL_ROOT = "/scratch-emmy/projects/nim00007/user-study/models"
 
 
 def get_train_and_val_images(name):
@@ -105,12 +105,18 @@ def segment_sam(image, model):
     pass
 
 
-# TODO
-def evaluate_sam(image_folder, label_folder, model_path, use_ais):
+def evaluate_sam(image_folder, label_folder, model_type, model_path, use_ais):
+    import micro_sam
+
     if use_ais:
-        model = ""
+        if model_path is None:
+            pass  # TODO
+        else:
+            predictor, decoder = micro_sam.instance_semgentation.get_predictor_and_decoder(model_type, model_path)
+        model = micro_sam.instance_segmentation.get_amg(predictor, decoder=decoder)
     else:
-        model = ""
+        predictor = micro_sam.util.get_sam_model(model_type=model_type, checkpoint_path=model_path)
+        model = micro_sam.instance_segmentation.get_amg(predictor)
     segment = partial(segment_sam, model=model)
     return _evaluate(image_folder, label_folder, segment)
 

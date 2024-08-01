@@ -21,7 +21,7 @@ def run_training(name):
         patch_shape=patch_shape, with_segmentation_decoder=with_segmentation_decoder,
         n_samples=250,
     )
-    train_loader = get_data_loader(train_ds, shuffle=True, batch_size=1, num_workers=num_workers)
+    train_loader = get_data_loader(train_ds, shuffle=True, batch_size=2, num_workers=num_workers)
 
     val_ds = default_sam_dataset(
         raw_paths=val_images, raw_key=None,
@@ -29,7 +29,7 @@ def run_training(name):
         patch_shape=patch_shape, with_segmentation_decoder=with_segmentation_decoder,
         is_train=False, n_samples=20,
     )
-    val_loader = get_data_loader(val_ds, shuffle=True, batch_size=1, num_workers=num_workers)
+    val_loader = get_data_loader(val_ds, shuffle=True, batch_size=2, num_workers=num_workers)
 
     save_root = os.path.join(MODEL_ROOT, f"micro-sam/v7/{name}")
     train_sam_for_configuration(
