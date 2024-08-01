@@ -22,7 +22,10 @@ def get_train_and_val_images(name, for_cellpose=False):
     )
 
     images = sorted(glob(os.path.join(image_folder, "*.tif")))
-    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
+    if for_cellpose:
+        images = [path for path in images if not path.endswith("_flows.tif")]
+
+    labels = sorted(glob(os.path.join(label_folder, "*.npy" if for_cellpose else "*.tif")))
     assert len(images) == len(labels) == 6
 
     # We use im4 as val.
@@ -39,7 +42,7 @@ def get_train_and_val_images(name, for_cellpose=False):
     )
 
     images = sorted(glob(os.path.join(image_folder, "*.tif")))
-    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
+    labels = sorted(glob(os.path.join(label_folder, "*.npy" if for_cellpose else "*.tif")))
     assert len(images) == len(labels) == 6
 
     train_images += images[:-1]

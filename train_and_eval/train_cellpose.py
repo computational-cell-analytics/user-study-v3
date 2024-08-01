@@ -11,6 +11,11 @@ def run_training(name):
     """
     train_images, train_labels, val_images, val_labels = get_train_and_val_images(name, for_cellpose=True)
 
+    train_images = [io.imread(path) for path in train_images]
+    train_labels = [io.imread(path) for path in train_labels]
+    val_images = [io.imread(path) for path in val_images]
+    val_labels = [io.imread(path) for path in val_labels]
+
     # Starting the logger which logs the training across epochs.
     io.logger_setup()
 
@@ -20,10 +25,10 @@ def run_training(name):
     save_root = os.path.join(MODEL_ROOT, f"cellpose/v8/{name}")
     train.train_seg(
         net=model.net,
-        train_files=train_images,
-        train_labels_files=train_labels,
-        test_files=val_images,
-        test_labels_files=val_labels,
+        train_data=train_images,
+        train_labels=train_labels,
+        test_data=val_images,
+        test_labels=val_labels,
         channels=[0, 0],
         save_path=save_root,
     )
