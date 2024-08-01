@@ -14,10 +14,12 @@ DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
 MODEL_ROOT = "/scratch-emmy/projects/nim00007/user-study/models"
 
 
-def get_train_and_val_images(name):
+def get_train_and_val_images(name, for_cellpose=False):
     # Get the annotated data from split 2.
     image_folder = os.path.join(DATA_ROOT, "for_annotation/split2")
-    label_folder = os.path.join(DATA_ROOT, f"annotations/v5/{name}")
+    label_folder = os.path.join(
+        DATA_ROOT, "annotations", "v6" if for_cellpose else "v5", f"{name}"
+    )
 
     images = sorted(glob(os.path.join(image_folder, "*.tif")))
     labels = sorted(glob(os.path.join(label_folder, "*.tif")))
@@ -32,7 +34,9 @@ def get_train_and_val_images(name):
 
     # Get the annotated data from split 3.
     image_folder = os.path.join(DATA_ROOT, "for_annotation/split3")
-    label_folder = os.path.join(DATA_ROOT, f"annotations/v7/{name}")
+    label_folder = os.path.join(
+        DATA_ROOT, "annotations", "v8" if for_cellpose else "v7", f"{name}"
+    )
 
     images = sorted(glob(os.path.join(image_folder, "*.tif")))
     labels = sorted(glob(os.path.join(label_folder, "*.tif")))
