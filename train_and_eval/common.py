@@ -14,6 +14,39 @@ DATA_ROOT = "../data"
 MODEL_ROOT = ""
 
 
+def get_train_and_val_images(name):
+    # Get the annotated data from split 2.
+    image_folder = os.path.join(DATA_ROOT, "for_annotation/split2")
+    label_folder = os.path.join(DATA_ROOT, f"annotations/v5/{name}")
+
+    images = sorted(glob(os.path.join(image_folder, "*.tif")))
+    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
+    assert len(images) == len(labels) == 6
+
+    # We use im4 as val.
+    train_images = images[:4] + images[-1:]
+    train_labels = labels[:4] + labels[-1:]
+
+    val_images = images[4:5]
+    val_labels = labels[4:5]
+
+    # Get the annotated data from split 3.
+    image_folder = os.path.join(DATA_ROOT, "for_annotation/split3")
+    label_folder = os.path.join(DATA_ROOT, f"annotations/v7/{name}")
+
+    images = sorted(glob(os.path.join(image_folder, "*.tif")))
+    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
+    assert len(images) == len(labels) == 6
+
+    train_images += images[:-1]
+    train_labels += labels[:-1]
+
+    val_images += images[-1:]
+    val_labels += labels[-1:]
+
+    return train_images, train_labels, val_images, val_labels
+
+
 def get_test_split_folders():
     image_folder = os.path.join(DATA_ROOT, "ground_truth/images")
     label_folder = os.path.join(DATA_ROOT, "ground_truth/masks")

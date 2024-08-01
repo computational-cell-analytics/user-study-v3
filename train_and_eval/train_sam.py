@@ -1,38 +1,16 @@
 import argparse
 import os
 
-from glob import glob
-
-
 from micro_sam.training import train_sam_for_configuration, default_sam_dataset
 from torch_em.segmentation import get_data_loader
 
-DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
-
-
-# TODO get the combined paths for v5 and v7
-def get_paths(name):
-    image_folder = os.path.join(DATA_ROOT, "for_annotation/split2")
-    label_folder = os.path.join(DATA_ROOT, f"annotations/v5/{name}")
-
-    images = sorted(glob(os.path.join(image_folder, "*.tif")))
-    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
-    assert len(images) == len(labels) == 6
-
-    # We use im4 as val.
-    train_images = images[:4] + images[-1:]
-    train_labels = labels[:4] + labels[-1:]
-
-    val_images = images[4:5]
-    val_labels = labels[4:5]
-
-    return train_images, train_labels, val_images, val_labels
+from common import get_train_and_val_images, MODEL_ROOT
 
 
 def run_training(name):
     with_segmentation_decoder = True
 
-    train_images, train_labels, val_images, val_labels = get_paths(name)
+    train_images, train_labels, val_images, val_labels = get_train_and_val_images(name)
 
     num_workers = 8
     patch_shape = (1024, 1024)
@@ -53,13 +31,13 @@ def run_training(name):
     )
     val_loader = get_data_loader(val_ds, shuffle=True, batch_size=1, num_workers=num_workers)
 
-    # TODO update the save root
+    save_root = os.path.join(MODEL_ROOT, f"micro-sam/v7/{name}")
     train_sam_for_configuration(
         name="organoid_model", configuration="A100",
         train_loader=train_loader, val_loader=val_loader,
         with_segmentation_decoder=with_segmentation_decoder,
-        save_root=f"./models/{name}", device="cuda",
-        model_type="vit_b_lm"
+        save_root=save_root, device="cuda",
+        model_type="vit_b_lm",
     )
 
 
