@@ -9,6 +9,7 @@ import pandas as pd
 from elf.evaluation import mean_segmentation_accuracy
 from tqdm import tqdm
 
+ANNOTATORS = ["anwai", "caro", "constantin", "luca", "marei"]
 # Change this for cluster
 DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
 MODEL_ROOT = "/scratch-emmy/projects/nim00007/user-study/models"
@@ -67,7 +68,25 @@ def get_organoidnet_folders():
 
 
 def get_all_cellpose_models():
-    pass
+    cp_models = {}
+
+    v6_root = os.path.join(MODEL_ROOT, "cellpose", "v6")
+    for ann in ANNOTATORS:
+        pattern = os.path.join(v6_root, ann, "CP*")
+        models = glob(pattern)
+        assert len(models) == 1, f"{ann} : {pattern} ; {models}"
+        model_path = models[0]
+        cp_models[f"v6/{ann}"] = model_path
+
+    v8_root = os.path.join(MODEL_ROOT, "cellpose", "v8")
+    for ann in ANNOTATORS:
+        pattern = os.path.join(v8_root, ann, "models", "cellpose*")
+        models = glob(pattern)
+        assert len(models) == 1, f"{ann} : {pattern} ; {models}"
+        model_path = models[0]
+        cp_models[f"v8/{ann}"] = model_path
+
+    return cp_models
 
 
 def get_all_sam_models():
@@ -103,8 +122,8 @@ def _evaluate(image_folder, label_folder, seg_function, verbose=True):
     return results
 
 
-def segment_cp(image, model):
-    masks = model.eval(image, channels=[0, 0])[0]
+def segment_cp(image, model, diameter):
+    masks = model.eval(image, channels=[0, 0], diameter=diameter)[0]
     return masks
 
 
@@ -133,11 +152,13 @@ def evaluate_cellpose(image_folder, label_folder, model_path):
     from cellpose import models
 
     use_gpu = torch.cuda.is_available()
-    if model_path is None:  # We evaluate cyto2 as default model
+    if model_path is None:  # We evaluate cyto2 as default model.
         model = models.Cellpose(gpu=use_gpu, model_type="cyto2")
+        diameter = None
     else:
         assert os.path.exists(model_path)
-        raise NotImplementedError
+        model = models.CellposeModel(gpu=use_gpu, pretrained_model=model_path)
+        diameter = model.diam_labels
 
-    segment = partial(segment_cp, model=model)
+    segment = partial(segment_cp, model=model, diameter=diameter)
     return _evaluate(image_folder, label_folder, segment)

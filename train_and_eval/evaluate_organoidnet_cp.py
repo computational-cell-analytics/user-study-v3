@@ -2,7 +2,7 @@ import argparse
 import os
 
 import pandas as pd
-from common import get_test_split_folders, evaluate_cellpose, get_all_cellpose_models
+from common import get_all_cellpose_models, evaluate_cellpose, get_organoidnet_folders
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     else:
         models = {"cyto2": None} if args.model_path is None else {os.path.basename(args.model_path): args.model_path}
 
-    image_folder, label_folder = get_test_split_folders()
+    image_folder, label_folder = get_organoidnet_folders()
 
     results = []
     for name, model_path in models.items():
