@@ -90,7 +90,25 @@ def get_all_cellpose_models():
 
 
 def get_all_sam_models():
-    pass
+    sam_models, use_ais = {}, {}
+
+    v5_root = os.path.join(MODEL_ROOT, "micro-sam", "v5")
+    for ann in ANNOTATORS:
+        name = f"v5/{ann}"
+        model_path = os.path.join(v5_root, ann, "checkpoints", "organoid_model", "best.pt")
+        assert os.path.exists(model_path), model_path
+        sam_models[name] = model_path
+        use_ais[name] = True
+
+    v7_root = os.path.join(MODEL_ROOT, "micro-sam", "v7")
+    for ann in ANNOTATORS:
+        name = f"v7/{ann}"
+        model_path = os.path.join(v7_root, ann, "checkpoints", "organoid_model", "best.pt")
+        assert os.path.exists(model_path), model_path
+        sam_models[name] = model_path
+        use_ais[name] = True
+
+    return sam_models, use_ais
 
 
 def _evaluate(image_folder, label_folder, seg_function, verbose=True):
@@ -128,21 +146,42 @@ def segment_cp(image, model, diameter):
 
 
 def segment_sam(image, model):
-    pass
+    from micro_sam.util import precompute_image_embeddings
+    from micro_sam.instance_segmentation import mask_data_to_segmentation
+
+    image_embeddings = precompute_image_embeddings(
+        model._predictor, image, ndim=2, verbose=False
+    )
+
+    model.clear_state()
+    model.initialize(image, image_embeddings=image_embeddings)
+    segmentation = model.generate()
+    segmentation = mask_data_to_segmentation(segmentation, with_background=True, min_object_size=50)
+
+    return segmentation
 
 
-def evaluate_sam(image_folder, label_folder, model_type, model_path, use_ais):
-    import micro_sam
+def evaluate_sam(image_folder, label_folder, model_path, use_ais):
+    import micro_sam.instance_segmentation as instance_seg
+    from micro_sam.util import get_sam_model
 
     if use_ais:
+
         if model_path is None:
-            pass  # TODO
+            predictor, decoder = instance_seg.get_predictor_and_decoder(
+                model_type="vit_b_lm", checkpoint_path=None
+            )
         else:
-            predictor, decoder = micro_sam.instance_semgentation.get_predictor_and_decoder(model_type, model_path)
-        model = micro_sam.instance_segmentation.get_amg(predictor, decoder=decoder)
+            predictor, decoder = instance_seg.get_predictor_and_decoder(
+                model_type="vit_b", checkpoint_path=model_path
+            )
+        model = instance_seg.get_amg(predictor, decoder=decoder, is_tiled=False)
+
     else:
-        predictor = micro_sam.util.get_sam_model(model_type=model_type, checkpoint_path=model_path)
-        model = micro_sam.instance_segmentation.get_amg(predictor)
+
+        predictor = get_sam_model(model_type="vit_b", checkpoint_path=model_path)
+        model = instance_seg.get_amg(predictor, is_tiled=False)
+
     segment = partial(segment_sam, model=model)
     return _evaluate(image_folder, label_folder, segment)
 
@@ -159,6 +198,7 @@ def evaluate_cellpose(image_folder, label_folder, model_path):
         assert os.path.exists(model_path)
         model = models.CellposeModel(gpu=use_gpu, pretrained_model=model_path)
         diameter = model.diam_labels
+        # diameter = None
 
     segment = partial(segment_cp, model=model, diameter=diameter)
     return _evaluate(image_folder, label_folder, segment)
