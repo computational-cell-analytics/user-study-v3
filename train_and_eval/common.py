@@ -205,6 +205,7 @@ def evaluate_cellpose(image_folder, label_folder, model_path, visualize=False):
     else:
         assert os.path.exists(model_path)
         model = models.CellposeModel(gpu=use_gpu, pretrained_model=model_path)
+        # NOTE: diameter set to "model.diam_labels" or None, both have the same effect
         # diameter = model.diam_labels
         # diameter = None
         diameter = 30
