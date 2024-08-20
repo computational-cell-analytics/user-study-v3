@@ -111,7 +111,7 @@ def get_all_sam_models():
     return sam_models, use_ais
 
 
-def _evaluate(image_folder, label_folder, seg_function, verbose=True):
+def _evaluate(image_folder, label_folder, seg_function, verbose=True, visualize=False):
     images = glob(os.path.join(image_folder, "*.tif"))
     labels = glob(os.path.join(label_folder, "*.tif"))
     assert len(images) == len(labels)
@@ -127,6 +127,14 @@ def _evaluate(image_folder, label_folder, seg_function, verbose=True):
 
         gt = imageio.imread(label_path)
         this_msa, scores = mean_segmentation_accuracy(segmentation, gt, return_accuracies=True)
+
+        if visualize:
+            import napari
+            v = napari.Viewer()
+            v.add_image(image, name="Image")
+            v.add_labels(gt, name="Labels", visible=False)
+            v.add_labels(segmentation, name="Predictions")
+            napari.run()
 
         msa.append(this_msa)
         sa50.append(scores[0])
@@ -186,7 +194,7 @@ def evaluate_sam(image_folder, label_folder, model_path, use_ais):
     return _evaluate(image_folder, label_folder, segment)
 
 
-def evaluate_cellpose(image_folder, label_folder, model_path):
+def evaluate_cellpose(image_folder, label_folder, model_path, visualize=False):
     import torch
     from cellpose import models
 
@@ -197,8 +205,10 @@ def evaluate_cellpose(image_folder, label_folder, model_path):
     else:
         assert os.path.exists(model_path)
         model = models.CellposeModel(gpu=use_gpu, pretrained_model=model_path)
-        diameter = model.diam_labels
+        # NOTE: diameter set to "model.diam_labels" or None, both have the same effect
+        # diameter = model.diam_labels
         # diameter = None
+        diameter = 30
 
     segment = partial(segment_cp, model=model, diameter=diameter)
-    return _evaluate(image_folder, label_folder, segment)
+    return _evaluate(image_folder, label_folder, segment, visualize=visualize)
