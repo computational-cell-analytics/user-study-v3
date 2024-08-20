@@ -194,7 +194,7 @@ def evaluate_sam(image_folder, label_folder, model_path, use_ais):
     return _evaluate(image_folder, label_folder, segment)
 
 
-def evaluate_cellpose(image_folder, label_folder, model_path, visualize=False):
+def evaluate_cellpose(image_folder, label_folder, model_path, use_preset_diameter=True, visualize=False):
     import torch
     from cellpose import models
 
@@ -205,10 +205,9 @@ def evaluate_cellpose(image_folder, label_folder, model_path, visualize=False):
     else:
         assert os.path.exists(model_path)
         model = models.CellposeModel(gpu=use_gpu, pretrained_model=model_path)
-        # NOTE: diameter set to "model.diam_labels" or None, both have the same effect
-        # diameter = model.diam_labels
-        # diameter = None
-        diameter = 30
+        # Using the diameter from within the model (by setting it to None)
+        # leads to inferior results. So we use the default preset diameter of 30.
+        diameter = 30 if use_preset_diameter else None
 
     segment = partial(segment_cp, model=model, diameter=diameter)
     return _evaluate(image_folder, label_folder, segment, visualize=visualize)

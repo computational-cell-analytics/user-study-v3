@@ -1,3 +1,4 @@
+import os
 import imageio.v3 as imageio
 import napari
 
@@ -25,16 +26,17 @@ def check_organoidnet():
 
     print("Checking organoidnet")
 
-    im_paths, label_paths = _get_data_paths("./data/datasets/organoidnet", download=True, split="Training")
+    im_paths, label_paths = _get_data_paths("./data/datasets/organoidnet", download=True, split="Test")
     print("Number of image paths:", len(im_paths))
 
-    for ii in range(8):
+    for ii in range(10):
         im = imageio.imread(im_paths[ii])
         mask = imageio.imread(label_paths[ii])
 
         v = napari.Viewer()
         v.add_image(im)
         v.add_labels(mask)
+        v.title = os.path.basename(im_paths[ii])
         napari.run()
 
 
