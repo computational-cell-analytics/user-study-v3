@@ -10,6 +10,7 @@ def main():
     parser.add_argument("-m", "--model_path")
     parser.add_argument("-a", "--evaluate_all", action="store_true")
     parser.add_argument("-o", "--output")
+    parser.add_argument("-s", "--save", action="store_true")
     args = parser.parse_args()
 
     if args.evaluate_all:
@@ -25,10 +26,18 @@ def main():
 
     image_folder, label_folder = get_test_split_folders()
 
+    if args.save:
+        prediction_root = "/scratch-emmy/projects/nim00007/user-study/predictions/test_images"
+    else:
+        prediction_root = None
+
     results = []
     for name, model_path in models.items():
         print("Evaluating", name)
-        result = evaluate_sam(image_folder, label_folder, model_path=model_path, use_ais=use_ais[name])
+        result = evaluate_sam(
+            image_folder, label_folder, model_path=model_path, use_ais=use_ais[name],
+            prediction_root=prediction_root, prediction_name=f"sam/{name}"
+        )
         result.insert(loc=0, column="Model", value=[name])
         results.append(result)
     results = pd.concat(results)

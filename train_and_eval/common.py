@@ -1,18 +1,24 @@
 import os
 from functools import partial
 from glob import glob
+from pathlib import Path
 
 import imageio.v3 as imageio
+import h5py
 import numpy as np
 import pandas as pd
+import torch
 
 from elf.evaluation import mean_segmentation_accuracy
 from tqdm import tqdm
 
 ANNOTATORS = ["anwai", "caro", "constantin", "luca", "marei"]
 # Change this for cluster
-DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
-MODEL_ROOT = "/scratch-emmy/projects/nim00007/user-study/models"
+# DATA_ROOT = "/scratch-emmy/projects/nim00007/user-study/data"
+# MODEL_ROOT = "/scratch-emmy/projects/nim00007/user-study/models"
+
+DATA_ROOT = "/mnt/lustre-grete/usr/u12086/user-study-cp/data"
+MODEL_ROOT = "/mnt/lustre-grete/usr/u12086/user-study-cp/models"
 
 
 def get_train_and_val_images(name, for_cellpose=False):
@@ -111,11 +117,15 @@ def get_all_sam_models():
     return sam_models, use_ais
 
 
-def _evaluate(image_folder, label_folder, seg_function, verbose=True, visualize=False):
-    images = glob(os.path.join(image_folder, "*.tif"))
-    labels = glob(os.path.join(label_folder, "*.tif"))
+def _evaluate(image_folder, label_folder, seg_function, verbose=True, prediction_root=None, prediction_name=None):
+    images = sorted(glob(os.path.join(image_folder, "*.tif")))
+    labels = sorted(glob(os.path.join(label_folder, "*.tif")))
     assert len(images) == len(labels)
     assert len(images) > 0
+
+    if prediction_root is not None:
+        assert prediction_name is not None
+        os.makedirs(prediction_root, exist_ok=True)
 
     msa, sa50, sa75 = [], [], []
     for image_path, label_path in tqdm(
@@ -125,16 +135,18 @@ def _evaluate(image_folder, label_folder, seg_function, verbose=True, visualize=
         image = imageio.imread(image_path)
         segmentation = seg_function(image)
 
+        if prediction_root is not None:
+            fname = Path(image_path).stem
+            out_path = os.path.join(prediction_root, f"{fname}.h5")
+            with h5py.File(out_path, "a") as f:
+                if prediction_name in f:
+                    ds = f[prediction_name]
+                    ds[:] = segmentation
+                else:
+                    f.create_dataset(prediction_name, data=segmentation, compression="gzip")
+
         gt = imageio.imread(label_path)
         this_msa, scores = mean_segmentation_accuracy(segmentation, gt, return_accuracies=True)
-
-        if visualize:
-            import napari
-            v = napari.Viewer()
-            v.add_image(image, name="Image")
-            v.add_labels(gt, name="Labels", visible=False)
-            v.add_labels(segmentation, name="Predictions")
-            napari.run()
 
         msa.append(this_msa)
         sa50.append(scores[0])
@@ -153,7 +165,7 @@ def segment_cp(image, model, diameter):
     return masks
 
 
-def segment_sam(image, model):
+def segment_sam(image, model, generate_kwargs):
     from micro_sam.util import precompute_image_embeddings
     from micro_sam.instance_segmentation import mask_data_to_segmentation
 
@@ -163,13 +175,16 @@ def segment_sam(image, model):
 
     model.clear_state()
     model.initialize(image, image_embeddings=image_embeddings)
-    segmentation = model.generate()
+    segmentation = model.generate(**generate_kwargs)
     segmentation = mask_data_to_segmentation(segmentation, with_background=True, min_object_size=50)
 
     return segmentation
 
 
-def evaluate_sam(image_folder, label_folder, model_path, use_ais):
+def evaluate_sam(
+    image_folder, label_folder, model_path, use_ais,
+    prediction_root=None, prediction_name=None,
+):
     import micro_sam.instance_segmentation as instance_seg
     from micro_sam.util import get_sam_model
 
@@ -190,11 +205,29 @@ def evaluate_sam(image_folder, label_folder, model_path, use_ais):
         predictor = get_sam_model(model_type="vit_b", checkpoint_path=model_path)
         model = instance_seg.get_amg(predictor, is_tiled=False)
 
-    segment = partial(segment_sam, model=model)
-    return _evaluate(image_folder, label_folder, segment)
+    gs_result = None
+    if model_path is not None:
+        state = torch.load(model_path)
+        gs_result = state.get("grid_search")
+
+    if gs_result is None:
+        print("Use default segmentation parameters:")
+        generate_kwargs = {}
+    else:
+        generate_kwargs = gs_result[0]
+        print("Use segmentation_parameters from grid_search:")
+        print(generate_kwargs)
+
+    segment = partial(segment_sam, model=model, generate_kwargs=generate_kwargs)
+    return _evaluate(
+        image_folder, label_folder, segment, prediction_root=prediction_root, prediction_name=prediction_name
+    )
 
 
-def evaluate_cellpose(image_folder, label_folder, model_path, use_preset_diameter=True, visualize=False):
+def evaluate_cellpose(
+    image_folder, label_folder, model_path, use_preset_diameter=True,
+    prediction_root=None, prediction_name=None,
+):
     import torch
     from cellpose import models
 
@@ -210,4 +243,7 @@ def evaluate_cellpose(image_folder, label_folder, model_path, use_preset_diamete
         diameter = 30 if use_preset_diameter else None
 
     segment = partial(segment_cp, model=model, diameter=diameter)
-    return _evaluate(image_folder, label_folder, segment, visualize=visualize)
+    return _evaluate(
+        image_folder, label_folder, segment,
+        prediction_root=prediction_root, prediction_name=prediction_name,
+    )
