@@ -12,13 +12,20 @@ from skimage.measure import label
 
 ANN_ROOT = "data/annotations"
 ANNOTATORS = ["anwai", "caro", "constantin", "luca", "marei"]
-# TODO use the proofread ones instead
-CONSENSUS_ROOT = "data/consensus_labels/automatic"
+CONSENSUS_ROOT = "data/consensus_labels/proofread"
 VERSION_TO_SPLIT = {
     "v1": 1, "v2": 1, "v3": 1, "v4": 1,
     "v5": 2, "v6": 2,
     "v7": 3, "v8": 3,
 }
+
+
+def _size_filter(labels, min_size):
+    if min_size is not None:
+        ids, sizes = np.unique(labels, return_counts=True)
+        filter_ids = ids[sizes < min_size]
+        labels[np.isin(labels, filter_ids)] = 0
+    return labels
 
 
 def _load_labels(version, name, im_name, min_size=None):
@@ -30,10 +37,7 @@ def _load_labels(version, name, im_name, min_size=None):
         label_path = os.path.join(ANN_ROOT, f"v{version}", name, f"{im_name}.tif")
         labels = imageio.imread(label_path)
     labels = label(labels)
-    if min_size is not None:
-        ids, sizes = np.unique(labels, return_counts=True)
-        filter_ids = ids[sizes < min_size]
-        labels[np.isin(labels, filter_ids)] = 0
+    labels = _size_filter(labels, min_size)
     return labels
 
 
@@ -181,6 +185,8 @@ def evaluate_annotation_quality():
         "msa_ann_dev": [],
     }
 
+    min_size = 50
+
     for v in range(1, 9):
         version = f"v{v}"
         split = VERSION_TO_SPLIT[version]
@@ -190,9 +196,11 @@ def evaluate_annotation_quality():
 
         for label_path in consensus_labels:
             consensus = imageio.imread(label_path)
+            consensus = _size_filter(consensus, min_size)
+
             im_name = Path(label_path).stem
             for name in ANNOTATORS:
-                seg = _load_labels(v, name, im_name, min_size=50)
+                seg = _load_labels(v, name, im_name, min_size=min_size)
                 this_msa = mean_segmentation_accuracy(seg, consensus)
                 msas.append(this_msa)
 
@@ -247,8 +255,8 @@ def evaluate_generalization():
 
 
 def get_main_summary():
-    # summary_quality = evaluate_annotation_quality()
-    # return summary_quality
+    summary_quality = evaluate_annotation_quality()
+    return summary_quality
 
     summary_time = evaluate_annotation_times()
     summary_quality = evaluate_annotation_quality()
@@ -263,7 +271,7 @@ def get_main_summary():
 def main():
     summary = get_main_summary()
     print(summary)
-    summary.to_excel("./result_summary.xlsx")
+    # summary.to_excel("./result_summary.xlsx")
 
     # Times are in seconds / image EXCEPT Training time, which is in hours
     # additional time evaluation for runtimes.
