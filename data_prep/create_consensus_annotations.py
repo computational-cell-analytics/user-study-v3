@@ -1,24 +1,23 @@
 import os
-import pickle
 from glob import glob
 from pathlib import Path
 
 import imageio.v3 as imageio
+import napari
 import numpy as np
 
-from elf.evaluation.matching import label_overlap, intersection_over_union
+from affogato.affinities import compute_affinities
+from elf.segmentation.mutex_watershed import mutex_watershed
 from skimage.measure import label
-from skimage.segmentation import relabel_sequential
-from tqdm import tqdm
-
+from skimage.segmentation import relabel_sequential, watershed
 
 DATA_ROOT = "../data"
-
 SPLITS_TO_VERSIONS = {
     1: ["v1", "v2", "v3", "v4"],
     2: ["v5", "v6"],
     3: ["v7", "v8"],
 }
+ANNOTATORS = ["anwai", "caro", "constantin", "luca", "marei"]
 
 
 def load_labels(path, min_size):
@@ -35,97 +34,62 @@ def load_labels(path, min_size):
     return seg
 
 
-def _compute_pairwise_scores(image_labels):
-    n_anns = len(image_labels)
+def _run_segmentation(affs, offsets, consensus_mask, min_size):
+    seg = mutex_watershed(
+        affs, offsets, strides=[3, 3], randomize_strides=True, mask=consensus_mask
+    )
+    ids, sizes = np.unique(seg, return_counts=True)
+    filter_ids = ids[sizes < min_size]
+    seg[np.isin(seg, filter_ids)] = 0
 
-    scores = {}
-    for i in range(n_anns):
-        for j in range(n_anns):
-            if i >= j:
-                continue
+    hmap = np.max(affs[:2], axis=0)
+    seg = watershed(hmap, markers=seg, mask=consensus_mask)
 
-            overlaps = label_overlap(image_labels[i], image_labels[j])[0]
-            overlaps = intersection_over_union(overlaps)
-            scores[(i, j)] = overlaps
-
-    return scores
+    return seg
 
 
-# TODO cache the pairwise overlaps
-def _compute_all_scores(split, annotations):
-    cache_folder = "overlaps"
-    os.makedirs(cache_folder, exist_ok=True)
-    cache_path = os.path.join(cache_folder, f"overlaps_split{split}.pickle")
+def make_consensus(im_name, path, annotation_folders, view, t_fg):
+    all_labels = []
+    all_affs = []
 
-    if os.path.exists(cache_path):
-        with open(cache_path, "rb") as f:
-            pairwise_scores = pickle.load(f)
-        return pairwise_scores
+    min_size = 50
 
-    pairwise_scores = {}
-    for im_name, image_labels in tqdm(annotations.items(), desc="Compute overlaps", total=len(annotations)):
-        scores = _compute_pairwise_scores(image_labels)
-        pairwise_scores[im_name] = scores
-
-    with open(cache_path, "wb") as f:
-        pickle.dump(pairwise_scores, f)
-
-    return pairwise_scores
-
-
-def _create_consensus(labels, overlaps, overlap_threshold, matching_threshold):
-    matches = [np.zeros(len(np.unique(lab))) for lab in labels]
-
-    n_pairs = len(labels) - 1
-    for pair, scores in overlaps.items():
-        i, j = pair
-        matches_i, matches_j = matches[i], matches[j]
-        this_matches = np.where(scores > overlap_threshold)
-        this_matches_i, this_matches_j = this_matches
-
-        matches_i[this_matches_i] += 1
-        matches_j[this_matches_j] += 1
-
-        matches[i], matches[j] = matches_i, matches_j
-
-    matches = [match / n_pairs for match in matches]
-    selections = [match > matching_threshold for match in matches]
-
-    done = [[]] * len(selections)
-    for i, selection in enumerate(selections):
-        selected = np.where(selection)
-
-    breakpoint()
-
-
-def make_consensus_annotations(
-    split, image_names, annotation_folders,
-    overlap_threshold, matching_threshold,
-    min_size=50
-):
-    n_images = len(image_names)
-    annotations = {im_name: [] for im_name in image_names}
-
+    offsets = [[-1, 0], [0, -1], [-3, 0], [0, -3], [-9, 0], [0, -9]]
+    # load all the annotations
     for folder in annotation_folders:
-        name = "-".join(folder.split("/")[-2:])
-        label_paths = sorted(glob(os.path.join(folder, "*.tif")))
-        if len(label_paths) == 0:
-            label_paths = sorted(glob(os.path.join(folder, "*.npy")))
-        assert len(label_paths) == n_images, f"{name}: {len(label_paths)} != {n_images}"
+        label_path = os.path.join(folder, f"{im_name}.tif")
+        if not os.path.exists(label_path):
+            label_path = os.path.join(folder, f"{im_name}_seg.npy")
+        assert os.path.exists(label_path), label_path
+        labels = load_labels(label_path, min_size=min_size)
+        all_labels.append(labels)
 
-        for lpath in label_paths:
-            labels = load_labels(lpath, min_size=min_size)
-            im_name = Path(lpath).stem.rstrip("_seg")
-            annotations[im_name].append(labels)
+        affs, mask = compute_affinities(labels, offsets, have_ignore_label=False)
+        affs = 1. - affs
+        mask = mask.astype("bool")
+        affs[~mask] = 0
+        all_affs.append(affs)
 
-    pairwise_scores = _compute_all_scores(split, annotations)
+    n_labels = float(len(all_labels))
 
-    consensus_labels = []
-    for im_name, scores in pairwise_scores.items():
-        im_labels = annotations[im_name]
-        print(im_name, "has", len(im_labels), "annotations.")
-        this_consensus = _create_consensus(im_labels, scores, overlap_threshold, matching_threshold)
-        consensus_labels.append(this_consensus)
+    stacked_binary_labels = np.stack(all_labels) != 0
+    consensus_probs = np.sum(stacked_binary_labels.astype("float"), axis=0)
+    consensus_probs /= n_labels
+    consensus_mask = consensus_probs > t_fg
+
+    stacked_affs = np.stack(all_affs)
+    normalized_affs = stacked_affs.sum(axis=0) / n_labels
+
+    consensus_labels = _run_segmentation(affs, offsets, consensus_mask, min_size)
+    if view:
+        image = imageio.imread(path)
+        v = napari.Viewer()
+        v.add_image(image)
+        v.add_image(consensus_probs, visible=False)
+        v.add_image(normalized_affs, visible=False)
+        v.add_labels(consensus_mask, visible=False)
+        v.add_labels(consensus_labels)
+        napari.run()
 
     return consensus_labels
 
@@ -133,42 +97,36 @@ def make_consensus_annotations(
 def create_consensus_annotations(split, view=True, save=False):
     versions = SPLITS_TO_VERSIONS[split]
 
+    # Foreground threshold
+    t_fg = 0.6
+
     images = sorted(glob(os.path.join(DATA_ROOT, "for_annotation", f"split{split}", "*.tif")))
     image_names = [Path(im_path).stem for im_path in images]
 
     annotation_folders = []
     for version in versions:
         version_folder = os.path.join(DATA_ROOT, "annotations", version)
-        annotation_folders.extend(sorted(glob(os.path.join(version_folder, "*"))))
+        annotation_folders.extend([os.path.join(version_folder, ann) for ann in ANNOTATORS])
 
-    overlap_threshold = 0.8
-    matching_threshold = 0.8
-    labels = make_consensus_annotations(
-        split, image_names, annotation_folders,
-        overlap_threshold=overlap_threshold,
-        matching_threshold=matching_threshold,
-    )
-    return
-
-    if view:
-        import napari
-
-        assert len(images) == len(labels)
-        for im, lab in zip(images, labels):
-            im, lab = imageio.imread(im), imageio.imread(lab)
-            v = napari.Viewer()
-            v.add_image(im)
-            v.add_labels(lab)
-            napari.run()
-
-    # TODO
-    if save:
-        pass
+    save_folder = os.path.join(DATA_ROOT, "consensus_labels", "automatic", f"split{split}")
+    for name, path in zip(image_names, images):
+        consensus_labels = make_consensus(name, path, annotation_folders, view=view, t_fg=t_fg)
+        if save:
+            os.makedirs(save_folder, exist_ok=True)
+            save_path = os.path.join(save_folder, f"{name}.tif")
+            imageio.imwrite(save_path, consensus_labels, compression="zlib")
 
 
+# Algorithm:
+# 1. Sum up the foreground per pixel and divide by the number of annotations
+#   -> this gives us consensus foreground probs
+#   -> everything above a certain threshold 't_fg' is foreground
+# 2. Compute affinites for each segmentation, sum up and normalize.
+#   -> Run mutex watershed based on these affinities and the foreground map from before.
 def main():
-    split = 1
-    create_consensus_annotations(split)
+    for split in (1, 2, 3):
+        print("Processing split", split)
+        create_consensus_annotations(split, view=False, save=True)
 
 
 if __name__ == "__main__":
