@@ -26,7 +26,18 @@ def export():
 
 
 def make_figure():
-    pass
+    import napari
+
+    im = imageio.imread("images/for_figure/image.tif")
+    seg_vanilla = imageio.imread("images/for_figure/seg_vanilla.tif")
+    seg_ft = imageio.imread("images/for_figure/seg_ft.tif")
+
+    v = napari.Viewer()
+    v.add_image(im)
+    v.add_labels(seg_vanilla)
+    v.add_labels(seg_ft)
+    napari.run()
 
 
-export()
+# export()
+make_figure()

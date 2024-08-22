@@ -208,7 +208,8 @@ def evaluate_annotation_quality():
         summary["msa_ann"].append(np.mean(msas))
         summary["msa_ann_dev"].append(np.std(msas))
 
-    return pd.DataFrame(summary)
+    summary = pd.DataFrame(summary)
+    return summary
 
 
 def _eval_generalization(result_file, version_list):
@@ -255,9 +256,6 @@ def evaluate_generalization():
 
 
 def get_main_summary():
-    summary_quality = evaluate_annotation_quality()
-    return summary_quality
-
     summary_time = evaluate_annotation_times()
     summary_quality = evaluate_annotation_quality()
     summary_gen = evaluate_generalization()
@@ -271,13 +269,13 @@ def get_main_summary():
 def main():
     summary = get_main_summary()
     print(summary)
-    # summary.to_excel("./result_summary.xlsx")
+    summary.to_excel("./result_summary.xlsx")
 
     # Times are in seconds / image EXCEPT Training time, which is in hours
     # additional time evaluation for runtimes.
-    # additional_rt = evaluate_processing_times()
-    # print(additional_rt)
-    # TODO save
+    additional_rt = evaluate_processing_times()
+    print(additional_rt)
+    additional_rt.to_excel("./runtime_summary.xlsx")
 
 
 main()
