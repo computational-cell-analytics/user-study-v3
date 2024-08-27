@@ -36,14 +36,14 @@ def _load_labels(version, name, im_name, min_size=None):
     else:
         label_path = os.path.join(ANN_ROOT, f"v{version}", name, f"{im_name}.tif")
         labels = imageio.imread(label_path)
-    labels = label(labels)
+    labels = label(labels, connectivity=1)
     labels = _size_filter(labels, min_size)
     return labels
 
 
-def _get_n_objects(version, name, im_name):
-    labels = _load_labels(version, name, im_name)
-    n_objects = labels.max()
+def _get_n_objects(version, name, im_name, min_size):
+    labels = _load_labels(version, name, im_name, min_size=min_size)
+    n_objects = len(np.unique(labels)) - 1
     return n_objects
 
 
@@ -106,10 +106,12 @@ def evaluate_annotation_times():
                 ann_time = _to_seconds(row[name])
                 annotator_time[name] += ann_time
 
-                n_objects = _get_n_objects(version, name, im_name)
+                n_objects = _get_n_objects(version, name, im_name, min_size=50)
                 annotator_objects[name] += n_objects
 
-        time_per_obj = np.array(list(annotator_time.values())) / np.array(list(annotator_objects.values()))
+        times = np.array(list(annotator_time.values()))
+        n_objects = np.array(list(annotator_objects.values()))
+        time_per_obj = times / n_objects
         time = np.mean(time_per_obj)
         time_dev = np.std(time_per_obj)
 
@@ -136,11 +138,9 @@ def evaluate_processing_times():
     for version, key in zip(versions, keys):
         results = pd.read_excel(time_file, sheet_name=version)
         results = results.drop("sushmita", axis=1)
+        # Exclude results for caro (too old laptop).
+        results = results.drop("caro", axis=1)
         results = results.dropna()
-
-        # Exclude preprocesssing result on cluster.
-        if version == "v7" and key == "preprocessing":
-            results = results.drop("caro", axis=1)
 
         if "*" in key:
             assert key.startswith("*")

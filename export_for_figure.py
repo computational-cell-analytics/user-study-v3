@@ -2,6 +2,8 @@ import os
 import imageio.v3 as imageio
 
 import h5py
+from skimage.segmentation import find_boundaries
+from scipy.ndimage import binary_dilation
 
 
 def export():
@@ -25,17 +27,32 @@ def export():
     imageio.imwrite(os.path.join(out_folder, "seg_ft.tif"), seg_ft, compression="zlib")
 
 
+def _to_boundaries(seg, dilation=0):
+    boundaries = find_boundaries(seg)
+    if dilation > 0:
+        boundaries = binary_dilation(boundaries, iterations=dilation)
+    return boundaries
+
+
 def make_figure():
     import napari
 
     im = imageio.imread("images/for_figure/image.tif")
     seg_vanilla = imageio.imread("images/for_figure/seg_vanilla.tif")
+    bd_vanilla = _to_boundaries(seg_vanilla)
+
     seg_ft = imageio.imread("images/for_figure/seg_ft.tif")
+    bd_ft = _to_boundaries(seg_ft)
 
     v = napari.Viewer()
     v.add_image(im)
+
     v.add_labels(seg_vanilla)
+    v.add_labels(bd_vanilla)
+
     v.add_labels(seg_ft)
+    v.add_labels(bd_ft)
+
     napari.run()
 
 
