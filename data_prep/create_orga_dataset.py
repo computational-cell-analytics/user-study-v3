@@ -36,7 +36,15 @@ def _check_size_histogram(label_images):
     plot_size_histogram(all_sizes)
 
 
-def _create_splits(output_folder, images, labels):
+def _match_image(im, original_images):
+    for name, candidate_im in original_images.items():
+        match = np.allclose(im, candidate_im)
+        if match:
+            return name
+    raise ValueError("Could not match image")
+
+
+def _create_splits(output_folder, images, labels, original_image_paths=None):
     assert len(images) == len(labels)
 
     sizes = []
@@ -82,6 +90,11 @@ def _create_splits(output_folder, images, labels):
         val_images.extend(val_ims)
         val_labels.extend(val_labs)
 
+    if original_image_paths is None:
+        original_images = None
+    else:
+        original_images = {os.path.basename(path): imageio.imread(path) for path in original_image_paths}
+
     split_images = {"train": train_images, "val": val_images, "test": test_images}
     split_labels = {"train": train_labels, "val": val_labels, "test": test_labels}
     for split in ("train", "val", "test"):
@@ -93,8 +106,15 @@ def _create_splits(output_folder, images, labels):
         os.makedirs(label_folder, exist_ok=True)
 
         for i, (im, lab) in enumerate(zip(split_images[split], split_labels[split])):
-            imageio.imwrite(os.path.join(im_folder, f"image{i:02}.tif"), im, compression="zlib")
-            imageio.imwrite(os.path.join(label_folder, f"image{i:02}.tif"), lab, compression="zlib")
+
+            # Try image matching if we have the original image paths.
+            if original_images is None:
+                fname = f"image{i:02}.tif"
+            else:
+                fname = _match_image(im, original_images)
+
+            imageio.imwrite(os.path.join(im_folder, fname), im, compression="zlib")
+            imageio.imwrite(os.path.join(label_folder, fname), lab, compression="zlib")
 
 
 def create_orga_dataset_v1(check_sizes=False):
@@ -138,11 +158,47 @@ def create_orga_dataset_v1(check_sizes=False):
     _create_splits(output_folder, images, labels)
 
 
-# TODO
-def create_orga_dataset_v2():
+def create_orga_dataset_v2(check_sizes=False):
     """Create second and final version of the dataset based on consensus annotations.
     """
-    pass
+    image_folders = [
+        os.path.join(ROOT, "ground_truth", "images"),
+        os.path.join(ROOT, "for_annotation", "split1"),
+        os.path.join(ROOT, "for_annotation", "split2"),
+        os.path.join(ROOT, "for_annotation", "split3"),
+    ]
+    annotation_folders = [
+        os.path.join(ROOT, "ground_truth", "masks"),
+        os.path.join(ROOT, "consensus_labels", "proofread", "split1"),
+        os.path.join(ROOT, "consensus_labels", "proofread", "split2"),
+        os.path.join(ROOT, "consensus_labels", "proofread", "split3"),
+    ]
+
+    # 150 appears a good size cutoff.
+    min_size = 150
+
+    images, labels = [], []
+    for im_folder, ann_folder in zip(image_folders, annotation_folders):
+        for im, ann in zip(
+            sorted(glob(os.path.join(im_folder, "*.tif"))), sorted(glob(os.path.join(ann_folder, "*.tif")))
+        ):
+            images.append(imageio.imread(im))
+            labels.append(_load_labels(ann, min_size))
+
+    images, labels = np.array(images), np.array(labels)
+    assert len(images) == len(labels)
+
+    # To determine a good min-size.
+    if check_sizes:
+        _check_size_histogram(labels)
+        return
+
+    output_folder = os.path.join(ROOT, "datasets", "orga", "v2")
+    os.makedirs(output_folder, exist_ok=True)
+
+    original_image_paths = glob(os.path.join(ROOT, "ground_truth", "images", "*.tif")) +\
+        glob(os.path.join(ROOT, "for_annotation", "all_images", "*.tif"))
+    _create_splits(output_folder, images, labels, original_image_paths)
 
 
 def check_dataset(version, view=True):
@@ -177,11 +233,15 @@ def check_dataset(version, view=True):
 # Dataset v1:
 # Number of images: 30
 # Number of organoids: 5779
+
+# Dataset v2:
+# Number of images: 30
+# Number of organoids: 6252
 def main():
-    create_orga_dataset_v1()
+    # create_orga_dataset_v1()
     # create_orga_dataset_v2()
 
-    check_dataset("v1", view=True)
+    check_dataset("v2", view=False)
 
 
 if __name__ == "__main__":
