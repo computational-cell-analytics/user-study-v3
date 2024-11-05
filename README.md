@@ -1,5 +1,6 @@
-# Updated micro-sam user study
+# micro-sam 2d annotation user study
 
+This repository contains the protocol and evaluation code for the 2D user study of the micro_sam publication.
 
 ## Annotation Experiments
 
